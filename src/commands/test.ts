@@ -8,7 +8,8 @@ import { leetCodeManager } from "../leetCodeManager";
 import { IQuickItemEx, UserStatus } from "../shared";
 import { isWindows, usingCmd } from "../utils/osUtils";
 import { DialogType, promptForOpenOutputChannel, showFileSelectDialog } from "../utils/uiUtils";
-import { getActiveFilePath } from "../utils/workspaceUtils";
+// import { getActiveFilePath } from "../utils/workspaceUtils";
+import { copyCodeBlock } from "../utils/workspaceUtils";
 import * as wsl from "../utils/wslUtils";
 import { leetCodeSubmissionProvider } from "../webview/leetCodeSubmissionProvider";
 
@@ -18,7 +19,9 @@ export async function testSolution(uri?: vscode.Uri): Promise<void> {
             return;
         }
 
-        const filePath: string | undefined = await getActiveFilePath(uri);
+        // const filePath: string | undefined = await getActiveFilePath(uri);
+        uri;
+        const filePath: string | undefined = await copyCodeBlock();
         if (!filePath) {
             return;
         }

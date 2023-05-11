@@ -14,6 +14,32 @@ import { DialogOptions, openUrl } from "./utils/uiUtils";
 import * as wsl from "./utils/wslUtils";
 import { toWslPath, useWsl } from "./utils/wslUtils";
 
+interface IDescription {
+    title: string;
+    url: string;
+    tags: string[];
+    companies: string[];
+    category: string;
+    difficulty: string;
+    likes: string;
+    dislikes: string;
+    body: string;
+}
+
+const promiseWithTimeout = (promise, timeout) => {
+    let timeoutId;
+    const timeoutPromise = new Promise((_, reject) => {
+      timeoutId = setTimeout(() => {
+        reject(new Error(`Operation timed out after ${timeout} milliseconds`));
+      }, timeout);
+    });
+
+    return Promise.race([promise, timeoutPromise]).then((result) => {
+      clearTimeout(timeoutId);
+      return result;
+    });
+};
+
 class LeetCodeExecutor implements Disposable {
     private leetCodeRootPath: string;
     private nodeExecutable: string;
@@ -100,6 +126,77 @@ class LeetCodeExecutor implements Disposable {
         return await this.executeCommandEx(this.nodeExecutable, cmd);
     }
 
+    private parseDescription(descString: string, problem: IProblem): IDescription {
+        const [
+            /* title */, ,
+            url, ,
+            /* tags */, ,
+            /* langs */, ,
+            category,
+            difficulty,
+            likes,
+            dislikes,
+            /* accepted */,
+            /* submissions */,
+            /* testcase */, ,
+            ...body
+        ] = descString.split("\n");
+        return {
+            title: problem.name,
+            url,
+            tags: problem.tags,
+            companies: problem.companies,
+            category: category.slice(2),
+            difficulty: difficulty.slice(2),
+            likes: likes.split(": ")[1].trim(),
+            dislikes: dislikes.split(": ")[1].trim(),
+            body: body.join("\n").replace(/<pre>[\r\n]*([^]+?)[\r\n]*<\/pre>/g, "<pre><code>$1</code></pre>"),
+        };
+    }
+
+    public async showDocumentationInternal(problemNode: IProblem, filePath: string): Promise<void> {
+
+        const descString: string = await this.getDescription(problemNode.id, false);
+        const description = this.parseDescription(descString, problemNode);
+        const { title, url, category, difficulty, likes, dislikes, body } = description;
+
+        const head: string = `# [${problemNode.id}. ${title}](${url})`;
+        const info: string = [
+            `| Category | Difficulty | Likes | Dislikes |`,
+            `| :------: | :--------: | :---: | :------: |`,
+            `| ${category} | ${difficulty} | ${likes} | ${dislikes} |`,
+        ].join("\n");
+        const tags = "**Tags**: " + description.tags.join(",");
+        const companies = "**Companies**: " + description.companies.join(",");
+
+        const md_content = [
+            head,
+            '',
+            "## Description",
+            '',
+            tags,
+            '',
+            companies,
+            '',
+            info,
+            '',
+            body.replace(/\t/g, "  "),
+            "## Solution\n",
+            "**题目描述**\n",
+            "**解题思路**\n",
+        ].join("\n");
+
+        // console.log("md_content", md_content);
+
+        if (!await fse.pathExists(filePath)) {
+            await fse.createFile(filePath);
+            await fse.writeFile(filePath, md_content);
+            workspace.openTextDocument(filePath).then((document) => {
+                window.showTextDocument(document);
+            });
+        }
+    }
+
     public async showProblem(problemNode: IProblem, language: string, filePath: string, showDescriptionInComment: boolean = false, needTranslation: boolean): Promise<void> {
         const templateType: string = showDescriptionInComment ? "-cx" : "-c";
         const cmd: string[] = [await this.getLeetCodeBinaryPath(), "show", problemNode.id, templateType, "-l", language];
@@ -164,7 +261,8 @@ class LeetCodeExecutor implements Disposable {
 
     public async submitSolution(filePath: string): Promise<string> {
         try {
-            return await this.executeCommandWithProgressEx("Submitting to LeetCode...", this.nodeExecutable, [await this.getLeetCodeBinaryPath(), "submit", `"${filePath}"`]);
+            return promiseWithTimeout(this.executeCommandWithProgressEx("Submitting to LeetCode...", this.nodeExecutable, [await this.getLeetCodeBinaryPath(), "submit", `"${filePath}"`]), 10000);
+            // return await this.executeCommandWithProgressEx("Submitting to LeetCode...", this.nodeExecutable, [await this.getLeetCodeBinaryPath(), "submit", `"${filePath}"`]);
         } catch (error) {
             if (error.result) {
                 return error.result;
@@ -175,9 +273,11 @@ class LeetCodeExecutor implements Disposable {
 
     public async testSolution(filePath: string, testString?: string): Promise<string> {
         if (testString) {
-            return await this.executeCommandWithProgressEx("Submitting to LeetCode...", this.nodeExecutable, [await this.getLeetCodeBinaryPath(), "test", `"${filePath}"`, "-t", `${testString}`]);
+            return promiseWithTimeout(this.executeCommandWithProgressEx("Submitting to LeetCode...", this.nodeExecutable, [await this.getLeetCodeBinaryPath(), "test", `"${filePath}"`, "-t", `${testString}`]), 10000);
+            // return await this.executeCommandWithProgressEx("Submitting to LeetCode...", this.nodeExecutable, [await this.getLeetCodeBinaryPath(), "test", `"${filePath}"`, "-t", `${testString}`]);
         }
-        return await this.executeCommandWithProgressEx("Submitting to LeetCode...", this.nodeExecutable, [await this.getLeetCodeBinaryPath(), "test", `"${filePath}"`]);
+        return promiseWithTimeout(this.executeCommandWithProgressEx("Submitting to LeetCode...", this.nodeExecutable, [await this.getLeetCodeBinaryPath(), "test", `"${filePath}"`]), 10000);
+        // return await this.executeCommandWithProgressEx("Submitting to LeetCode...", this.nodeExecutable, [await this.getLeetCodeBinaryPath(), "test", `"${filePath}"`]);
     }
 
     public async switchEndpoint(endpoint: string): Promise<string> {

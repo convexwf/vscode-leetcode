@@ -59,6 +59,43 @@ export async function showProblem(node?: LeetCodeNode): Promise<void> {
     await showProblemInternal(node);
 }
 
+export async function showDocumentation(node?: LeetCodeNode): Promise<void> {
+    if (!node) {
+        return;
+    }
+    console.log(`Show documentation: ${node.id}`);
+    try {
+        const leetCodeConfig: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("leetcode");
+        const workspaceFolder: string = await selectWorkspaceFolder();
+        if (!workspaceFolder) {
+            return;
+        }
+
+        const fileFolder: string = leetCodeConfig.get<string>(`filePath.doc.folder`, "").trim();
+        const fileName: string = leetCodeConfig.get<string>(`filePath.doc.filename`, "").trim();
+        if (fileFolder === "" || fileName === "") {
+            await promptForOpenOutputChannel("Please configure the file path first.", DialogType.error);
+            return;
+        }
+
+        let finalPath: string = path.join(workspaceFolder, fileFolder, fileName);
+        if (finalPath) {
+            finalPath = await resolveRelativePath(finalPath, node, "md");
+            if (!finalPath) {
+                leetCodeChannel.appendLine("Showing problem canceled by user.");
+                return;
+            }
+        }
+        finalPath = wsl.useWsl() ? await wsl.toWinPath(finalPath) : finalPath;
+        console.log(`Documentation path: ${finalPath}`);
+
+        await leetCodeExecutor.showDocumentationInternal(node, finalPath);
+    }
+    catch (error) {
+        console.log(error);
+    }
+}
+
 export async function searchProblem(): Promise<void> {
     if (!leetCodeManager.getUser()) {
         promptForSignIn();

@@ -59,6 +59,97 @@ export async function selectWorkspaceFolder(): Promise<string> {
     return wsl.useWsl() ? wsl.toWslPath(workspaceFolderSetting) : workspaceFolderSetting;
 }
 
+export async function insertSubmitResult(result?: string): Promise<string | undefined> {
+    if (!result) {
+        return;
+    }
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+        vscode.window.showErrorMessage("Please open a solution file first.");
+        return;
+    }
+    editor.document.save();
+
+    // 获取当前光标所在行
+    const currentLine = editor.selection.active.line;
+    // 向前遍历找到第一次出现 "// @lc code=start" 的行
+    let startLine = currentLine;
+    while (startLine >= 0) {
+        const lineText = editor.document.lineAt(startLine).text;
+        if (lineText.includes('// @lc code=start')) {
+            break;
+        }
+        startLine--;
+    }
+    if (startLine < 0) {
+        vscode.window.showErrorMessage("Please add '// @lc code=start' in your solution file.");
+        return;
+    }
+
+    // 将 result 插入到 startLine 之后
+    const resultLines: string[] = result.split(os.EOL);
+    const insertPosition: vscode.Position = new vscode.Position(startLine + 1, 0);
+    await editor.edit((editBuilder) => {
+        resultLines.forEach((line) => {
+            editBuilder.insert(insertPosition, `${line}${os.EOL}`);
+        });
+    });
+    return;
+}
+
+export async function copyCodeBlock(): Promise<string | undefined> {
+    // 获取当前激活的文本编辑器
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+        vscode.window.showErrorMessage('当前没有打开的文本编辑器');
+        return;
+    }
+    // 获取当前光标所在行
+    const currentLine = editor.selection.active.line;
+
+    // 向前遍历找到第一次出现 "// @lc code=start" 的行
+    let startLine = currentLine;
+    while (startLine >= 0) {
+        const lineText = editor.document.lineAt(startLine).text;
+        if (lineText.includes('// @lc code=start')) {
+            break;
+        }
+        startLine--;
+    }
+
+    // 向后遍历找到第一次出现 "// @lc code=end" 的行
+    let endLine = currentLine;
+    while (endLine < editor.document.lineCount) {
+        const lineText = editor.document.lineAt(endLine).text;
+        if (lineText.includes('// @lc code=end')) {
+            break;
+        }
+        endLine++;
+    }
+
+    const leetCodeConfig: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("leetcode");
+    const filePath: string = leetCodeConfig.get<string>(`filePath.default.codefile`, "").trim();
+    if (filePath === "") {
+        vscode.window.showErrorMessage("Please specify the default code file path in the settings.");
+        return;
+    }
+
+    // 如果找到了符合条件的区域，将其复制到文件中
+    if (startLine < endLine) {
+        const fileContent = `// ${editor.document.lineAt(1).text}\n` + // 添加当前文件正数第二行前面加上 "// "
+            editor.document.getText(new vscode.Range(
+                new vscode.Position(startLine, 0),
+                new vscode.Position(endLine + 1, 0)
+            ));
+        fse.writeFileSync(filePath, fileContent);
+
+        // vscode.window.showInformationMessage(`成功将代码复制到文件 ${filePath}`);
+    } else {
+        vscode.window.showWarningMessage('未找到符合条件的代码区域');
+    }
+    return filePath;
+}
+
 export async function getActiveFilePath(uri?: vscode.Uri): Promise<string | undefined> {
     let textEditor: vscode.TextEditor | undefined;
     if (uri) {
