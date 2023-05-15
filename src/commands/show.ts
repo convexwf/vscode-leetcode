@@ -13,7 +13,7 @@ import { leetCodeManager } from "../leetCodeManager";
 import { IProblem, IQuickItemEx, languages, ProblemState } from "../shared";
 import { genFileExt, genFileName, getNodeIdFromFile } from "../utils/problemUtils";
 import * as settingUtils from "../utils/settingUtils";
-import { IDescriptionConfiguration } from "../utils/settingUtils";
+import { IDescriptionConfiguration, getWorkspaceConfiguration } from "../utils/settingUtils";
 import { DialogOptions, DialogType, openSettingsEditor, promptForOpenOutputChannel, promptForSignIn, promptHintMessage } from "../utils/uiUtils";
 import { getActiveFilePath, selectWorkspaceFolder } from "../utils/workspaceUtils";
 import * as wsl from "../utils/wslUtils";
@@ -65,7 +65,7 @@ export async function showDocumentation(node?: LeetCodeNode): Promise<void> {
     }
     console.log(`Show documentation: ${node.id}`);
     try {
-        const leetCodeConfig: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("leetcode");
+        const leetCodeConfig: vscode.WorkspaceConfiguration = getWorkspaceConfiguration();
         const workspaceFolder: string = await selectWorkspaceFolder();
         if (!workspaceFolder) {
             return;

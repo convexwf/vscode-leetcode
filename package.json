@@ -2,7 +2,7 @@
   "name": "vscode-leetcode",
   "displayName": "LeetCode",
   "description": "Solve LeetCode problems in VS Code",
-  "version": "0.19.0",
+  "version": "0.19.1",
   "author": "convexwf",
   "publisher": "LeetCode",
   "license": "MIT",

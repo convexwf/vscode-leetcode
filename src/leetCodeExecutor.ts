@@ -160,7 +160,7 @@ class LeetCodeExecutor implements Disposable {
         const description = this.parseDescription(descString, problemNode);
         const { title, url, category, difficulty, likes, dislikes, body } = description;
 
-        const head: string = `# [${problemNode.id}. ${title}](${url})`;
+        const head: string = `# [${problemNode.id}.${title}](${url})`;
         const info: string = [
             `| Category | Difficulty | Likes | Dislikes |`,
             `| :------: | :--------: | :---: | :------: |`,
@@ -180,7 +180,7 @@ class LeetCodeExecutor implements Disposable {
             '',
             info,
             '',
-            body.replace(/\t/g, "  "),
+            body.replace(/\t/g, "  ").replace(/(\n)+/g, "\n"),
             "## Solution\n",
             "**题目描述**\n",
             "**解题思路**\n",
@@ -261,8 +261,8 @@ class LeetCodeExecutor implements Disposable {
 
     public async submitSolution(filePath: string): Promise<string> {
         try {
-            return promiseWithTimeout(this.executeCommandWithProgressEx("Submitting to LeetCode...", this.nodeExecutable, [await this.getLeetCodeBinaryPath(), "submit", `"${filePath}"`]), 10000);
-            // return await this.executeCommandWithProgressEx("Submitting to LeetCode...", this.nodeExecutable, [await this.getLeetCodeBinaryPath(), "submit", `"${filePath}"`]);
+            // return promiseWithTimeout(this.executeCommandWithProgressEx("Submitting to LeetCode...", this.nodeExecutable, [await this.getLeetCodeBinaryPath(), "submit", `"${filePath}"`]), 10000);
+            return await this.executeCommandWithProgressEx("Submitting to LeetCode...", this.nodeExecutable, [await this.getLeetCodeBinaryPath(), "submit", `"${filePath}"`]);
         } catch (error) {
             if (error.result) {
                 return error.result;
@@ -273,8 +273,8 @@ class LeetCodeExecutor implements Disposable {
 
     public async testSolution(filePath: string, testString?: string): Promise<string> {
         if (testString) {
-            return promiseWithTimeout(this.executeCommandWithProgressEx("Submitting to LeetCode...", this.nodeExecutable, [await this.getLeetCodeBinaryPath(), "test", `"${filePath}"`, "-t", `${testString}`]), 10000);
-            // return await this.executeCommandWithProgressEx("Submitting to LeetCode...", this.nodeExecutable, [await this.getLeetCodeBinaryPath(), "test", `"${filePath}"`, "-t", `${testString}`]);
+            // return promiseWithTimeout(this.executeCommandWithProgressEx("Submitting to LeetCode...", this.nodeExecutable, [await this.getLeetCodeBinaryPath(), "test", `"${filePath}"`, "-t", `${testString}`]), 10000);
+            return await this.executeCommandWithProgressEx("Submitting to LeetCode...", this.nodeExecutable, [await this.getLeetCodeBinaryPath(), "test", `"${filePath}"`, "-t", `${testString}`]);
         }
         return promiseWithTimeout(this.executeCommandWithProgressEx("Submitting to LeetCode...", this.nodeExecutable, [await this.getLeetCodeBinaryPath(), "test", `"${filePath}"`]), 10000);
         // return await this.executeCommandWithProgressEx("Submitting to LeetCode...", this.nodeExecutable, [await this.getLeetCodeBinaryPath(), "test", `"${filePath}"`]);

@@ -5,7 +5,16 @@ import { workspace, WorkspaceConfiguration } from "vscode";
 import { DescriptionConfiguration } from "../shared";
 
 export function getWorkspaceConfiguration(): WorkspaceConfiguration {
+    // if (!window.activeTextEditor) {
+    //     return workspace.getConfiguration("leetcode");
+    // }
     return workspace.getConfiguration("leetcode");
+    // let uri = window.activeTextEditor.document.uri;
+    // let workspaceFolder = workspace.getWorkspaceFolder(uri);
+    // console.log("workspaceFolder", workspaceFolder ? workspaceFolder.uri.fsPath : "");
+    // let config = workspace.getConfiguration('leetcode', workspaceFolder);
+    // console.log("getWorkspaceConfiguration", config.get("workspaceFolder"));
+    // return config;
 }
 
 export function shouldHideSolvedProblem(): boolean {

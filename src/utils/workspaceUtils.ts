@@ -104,6 +104,9 @@ export async function copyCodeBlock(): Promise<string | undefined> {
         vscode.window.showErrorMessage('当前没有打开的文本编辑器');
         return;
     }
+    // 获取当前文件的后缀名
+    const activeFilePath = editor.document.uri.fsPath;
+    const activeileExt = activeFilePath.split('.').pop();
     // 获取当前光标所在行
     const currentLine = editor.selection.active.line;
 
@@ -127,12 +130,14 @@ export async function copyCodeBlock(): Promise<string | undefined> {
         endLine++;
     }
 
-    const leetCodeConfig: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("leetcode");
-    const filePath: string = leetCodeConfig.get<string>(`filePath.default.codefile`, "").trim();
+    const workspaceFolder = getWorkspaceFolder();
+    let filePath: string = path.join(workspaceFolder, "temp", `temp.${activeileExt}`);
+    console.log("filePath", filePath);
     if (filePath === "") {
-        vscode.window.showErrorMessage("Please specify the default code file path in the settings.");
+        vscode.window.showErrorMessage('请先设置 LeetCode 插件的工作目录');
         return;
     }
+    filePath = wsl.useWsl() ? await wsl.toWinPath(filePath) : filePath;
 
     // 如果找到了符合条件的区域，将其复制到文件中
     if (startLine < endLine) {
@@ -141,6 +146,8 @@ export async function copyCodeBlock(): Promise<string | undefined> {
                 new vscode.Position(startLine, 0),
                 new vscode.Position(endLine + 1, 0)
             ));
+        // create dir if not exists
+        fse.ensureDirSync(path.dirname(filePath));
         fse.writeFileSync(filePath, fileContent);
 
         // vscode.window.showInformationMessage(`成功将代码复制到文件 ${filePath}`);
