@@ -52,11 +52,89 @@ export async function pickOne(): Promise<void> {
     await showProblemInternal(randomProblem);
 }
 
+export async function generateDocumentation(): Promise<void> {
+    const ids: string | undefined = await vscode.window.showInputBox({
+        prompt: "Enter problem id. e.g. 1, 1-10, 1,2,3, 1,2,3-10",
+        ignoreFocusOut: true,
+        validateInput: (s: string): string | undefined => s && s.trim() ? undefined : "The input must not be empty",
+    });
+    if (!ids) {
+        return;
+    }
+    const idArray: string[] = ids.split(",");
+    const nodeArray: IProblem[] = [];
+    for (const id of idArray) {
+        const _id: string = id.trim();
+        if (_id.search("-") > 0) {
+            const range: string[] = _id.split("-");
+            const start: number = parseInt(range[0], 10);
+            const end: number = parseInt(range[1], 10);
+            if (start > 0 && end > 0 && start <= end) {
+                for (let i: number = start; i <= end; i++) {
+                    console.log(`Show documentation: ${i}`);
+                    const node: IProblem | undefined = explorerNodeManager.getNodeById(i.toString());
+                    if (node) {
+                        nodeArray.push(node);
+                    }
+                }
+            }
+        }
+        else {
+            console.log(`Show documentation: ${_id}`);
+            const node: IProblem | undefined = explorerNodeManager.getNodeById(_id);
+            if (node) {
+                nodeArray.push(node);
+            }
+        }
+    }
+
+    for (const node of nodeArray) {
+        const finalPath: string = await assureDoucumentation(node);
+        if (!finalPath) {
+            continue;
+        }
+        try {
+            await leetCodeExecutor.showDocumentationInternal(node, finalPath);
+        }
+        catch (error) {
+            console.log(error);
+            vscode.window.showErrorMessage(error);
+        }
+    }
+}
+
 export async function showProblem(node?: LeetCodeNode): Promise<void> {
     if (!node) {
         return;
     }
     await showProblemInternal(node);
+}
+
+async function assureDoucumentation(node: IProblem): Promise<string> {
+    const leetCodeConfig: vscode.WorkspaceConfiguration = getWorkspaceConfiguration();
+    const workspaceFolder: string = await selectWorkspaceFolder();
+    if (!workspaceFolder) {
+        return "";
+    }
+
+    const fileFolder: string = leetCodeConfig.get<string>(`filePath.doc.folder`, "").trim();
+    const fileName: string = leetCodeConfig.get<string>(`filePath.doc.filename`, "").trim();
+    if (fileFolder === "" || fileName === "") {
+        await promptForOpenOutputChannel("Please configure the file path first.", DialogType.error);
+        return "";
+    }
+
+    let finalPath: string = path.join(workspaceFolder, fileFolder, fileName);
+    if (finalPath) {
+        finalPath = await resolveRelativePath(finalPath, node, "md");
+        if (!finalPath) {
+            leetCodeChannel.appendLine("Showing problem canceled by user.");
+            return "";
+        }
+    }
+    finalPath = wsl.useWsl() ? await wsl.toWinPath(finalPath) : finalPath;
+    console.log(`Documentation path: ${finalPath}`);
+    return finalPath;
 }
 
 export async function showDocumentation(node?: LeetCodeNode): Promise<void> {

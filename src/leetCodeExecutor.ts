@@ -156,6 +156,11 @@ class LeetCodeExecutor implements Disposable {
 
     public async showDocumentationInternal(problemNode: IProblem, filePath: string): Promise<void> {
 
+        if (await fse.pathExists(filePath)) {
+            await window.showInformationMessage(`File ${filePath} already exists!`);
+            return;
+        }
+
         const descString: string = await this.getDescription(problemNode.id, false);
         const description = this.parseDescription(descString, problemNode);
         const { title, url, category, difficulty, likes, dislikes, body } = description;
@@ -188,13 +193,12 @@ class LeetCodeExecutor implements Disposable {
 
         // console.log("md_content", md_content);
 
-        if (!await fse.pathExists(filePath)) {
-            await fse.createFile(filePath);
-            await fse.writeFile(filePath, md_content);
-            workspace.openTextDocument(filePath).then((document) => {
-                window.showTextDocument(document);
-            });
-        }
+
+        await fse.createFile(filePath);
+        await fse.writeFile(filePath, md_content);
+        workspace.openTextDocument(filePath).then((document) => {
+            window.showTextDocument(document);
+        });
     }
 
     public async showProblem(problemNode: IProblem, language: string, filePath: string, showDescriptionInComment: boolean = false, needTranslation: boolean): Promise<void> {

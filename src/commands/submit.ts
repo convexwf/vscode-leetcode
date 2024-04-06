@@ -43,10 +43,10 @@ export async function submitSolution(uri?: vscode.Uri): Promise<void> {
 
         // 匹配通过测试用例数、运行时间和内存使用情况的正则表达式
         const regex_cases_passed = /(\d+)\/(\d+) cases passed/;
-        const regex_runtime_percentage = /Your runtime beats (\d+\.\d+) %/;
-        const regex_memory_percentage = /Your memory usage beats (\d+\.\d+) %/;
+        const regex_runtime_percentage = /Your runtime beats  (\d+(.\d+)?) %/;
+        const regex_memory_percentage = /Your memory usage beats  (\d+(.\d+)?) %/;
         const regex_runtime_ms = /(\d+) ms/;
-        const regex_memory_usage = /\((\d+\.\d+) MB\)/;
+        const regex_memory_usage = /\( (\d+(.\d+)?) MB\)/;
 
         // 提取通过测试用例数、运行时间和内存使用情况
         const [cases_passed, total_cases] = regex_cases_passed.exec(message)?.slice(1) ?? [];

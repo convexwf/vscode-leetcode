@@ -2,7 +2,7 @@
   "name": "vscode-leetcode",
   "displayName": "LeetCode",
   "description": "Solve LeetCode problems in VS Code",
-  "version": "0.19.1",
+  "version": "0.20.1",
   "author": "convexwf",
   "publisher": "LeetCode",
   "license": "MIT",
@@ -32,6 +32,7 @@
     "onCommand:leetcode.manageSessions",
     "onCommand:leetcode.refreshExplorer",
     "onCommand:leetcode.pickOne",
+    "onCommand:leetcode.generateDocumentation",
     "onCommand:leetcode.showProblem",
     "onCommand:leetcode.showDocumentation",
     "onCommand:leetcode.previewProblem",
@@ -81,6 +82,11 @@
       {
         "command": "leetcode.pickOne",
         "title": "Pick One",
+        "category": "LeetCode"
+      },
+      {
+        "command": "leetcode.generateDocumentation",
+        "title": "Generate Documentation",
         "category": "LeetCode"
       },
       {

@@ -72,17 +72,17 @@ export async function insertSubmitResult(result?: string): Promise<string | unde
 
     // 获取当前光标所在行
     const currentLine = editor.selection.active.line;
-    // 向前遍历找到第一次出现 "// @lc code=start" 的行
+    // 向前遍历找到第一次出现 "@lc code=start" 的行
     let startLine = currentLine;
     while (startLine >= 0) {
         const lineText = editor.document.lineAt(startLine).text;
-        if (lineText.includes('// @lc code=start')) {
+        if (lineText.includes('@lc code=start')) {
             break;
         }
         startLine--;
     }
     if (startLine < 0) {
-        vscode.window.showErrorMessage("Please add '// @lc code=start' in your solution file.");
+        vscode.window.showErrorMessage("Please add '@lc code=start' in your solution file.");
         return;
     }
 
@@ -110,21 +110,21 @@ export async function copyCodeBlock(): Promise<string | undefined> {
     // 获取当前光标所在行
     const currentLine = editor.selection.active.line;
 
-    // 向前遍历找到第一次出现 "// @lc code=start" 的行
+    // 向前遍历找到第一次出现 "@lc code=start" 的行
     let startLine = currentLine;
     while (startLine >= 0) {
         const lineText = editor.document.lineAt(startLine).text;
-        if (lineText.includes('// @lc code=start')) {
+        if (lineText.includes('@lc code=start')) {
             break;
         }
         startLine--;
     }
 
-    // 向后遍历找到第一次出现 "// @lc code=end" 的行
+    // 向后遍历找到第一次出现 "@lc code=end" 的行
     let endLine = currentLine;
     while (endLine < editor.document.lineCount) {
         const lineText = editor.document.lineAt(endLine).text;
-        if (lineText.includes('// @lc code=end')) {
+        if (lineText.includes('@lc code=end')) {
             break;
         }
         endLine++;
